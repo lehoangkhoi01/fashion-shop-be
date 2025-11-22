@@ -1,0 +1,317 @@
+{
+	"info": {
+		"_postman_id": "fashion-shop-api-collection",
+		"name": "Fashion Shop API",
+		"description": "Complete API collection for Fashion Shop Backend - A comprehensive e-commerce platform with product catalog, inventory, and order management.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Products",
+			"description": "Product management endpoints for creating, reading, updating, and deleting products.",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"]
+						},
+						"description": "Retrieves all products from the catalog. Results are cached in Redis for 1 hour with 10-minute sliding expiration."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", "1"]
+						},
+						"description": "Retrieves a specific product by its ID. Returns 404 if product not found."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Classic Denim Jacket\",\n  \"sku\": \"DNM-JKT-001\",\n  \"price\": 89.99,\n  \"properties\": {\n    \"color\": \"Blue\",\n    \"size\": \"M\",\n    \"material\": \"100% Cotton Denim\",\n    \"brand\": \"Urban Style\"\n  },\n  \"catalogId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"]
+						},
+						"description": "Creates a new product. SKU must be unique. Invalidates 'products_all' cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"name\": \"Premium Denim Jacket\",\n  \"sku\": \"DNM-JKT-001\",\n  \"price\": 99.99,\n  \"properties\": {\n    \"color\": \"Dark Blue\",\n    \"size\": \"M\",\n    \"material\": \"100% Premium Cotton Denim\",\n    \"brand\": \"Urban Style\"\n  },\n  \"catalogId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", "1"]
+						},
+						"description": "Updates an existing product. Returns 400 if ID mismatch, 204 on success. Invalidates both 'products_all' and 'product_{id}' cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", "1"]
+						},
+						"description": "Soft deletes a product (sets IsDeleted=true, DeletedAt=UTC_NOW). Product is excluded from future queries. Returns 204 on success."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Catalogs",
+			"description": "Catalog management endpoints for organizing products into categories.",
+			"item": [
+				{
+					"name": "Get All Catalogs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/catalogs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "catalogs"]
+						},
+						"description": "Retrieves all catalogs. Results are cached in Redis for 2 hours with 20-minute sliding expiration."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Catalog by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/catalogs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "catalogs", "1"]
+						},
+						"description": "Retrieves a specific catalog by its ID. Returns 404 if catalog not found."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Catalog",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Men's Outerwear\",\n  \"description\": \"Jackets, coats, and outdoor clothing for men\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/catalogs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "catalogs"]
+						},
+						"description": "Creates a new catalog. Invalidates 'catalogs_all' cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Catalog",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"name\": \"Men's Premium Outerwear\",\n  \"description\": \"High-quality jackets, coats, and outdoor clothing for men\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/catalogs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "catalogs", "1"]
+						},
+						"description": "Updates an existing catalog. Returns 400 if ID mismatch, 204 on success. Invalidates both 'catalogs_all' and 'catalog_{id}' cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Catalog (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/catalogs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "catalogs", "1"]
+						},
+						"description": "Soft deletes a catalog (sets IsDeleted=true, DeletedAt=UTC_NOW). Catalog is excluded from future queries. Associated products remain unchanged. Returns 204 on success."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"description": "Order management endpoints for placing orders and retrieving order history.",
+			"item": [
+				{
+					"name": "Place Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"customerName\": \"John Doe\",\n  \"phoneNumber\": \"+1-555-0123\",\n  \"address\": \"123 Main Street, Apt 4B, New York, NY 10001\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"productId\": 2,\n      \"quantity\": 1\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"]
+						},
+						"description": "Places a new order. Validates stock availability, calculates total amount, deducts inventory, and creates order with 'Pending' status. Either userId or guestId must be provided."
+					},
+					"response": []
+				},
+				{
+					"name": "Place Guest Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"guestId\": \"guest-550e8400-e29b-41d4-a716-446655440000\",\n  \"customerName\": \"Jane Smith\",\n  \"phoneNumber\": \"+1-555-0456\",\n  \"address\": \"456 Oak Avenue, Suite 200, Los Angeles, CA 90001\",\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"quantity\": 1\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"]
+						},
+						"description": "Places an order as a guest user. Uses guestId instead of userId for anonymous purchases."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", "1"]
+						},
+						"description": "Retrieves a specific order by its ID. Returns 404 if order not found."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Orders by User ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/user/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", "user", "1"]
+						},
+						"description": "Retrieves all orders for a specific user. Returns order history with all order details and items."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inventory",
+			"description": "Inventory management endpoints for stock control.",
+			"item": [
+				{
+					"name": "Add Stock",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/inventory/add?productId=1&quantity=50",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "inventory", "add"],
+							"query": [
+								{
+									"key": "productId",
+									"value": "1",
+									"description": "ID of the product to add stock for"
+								},
+								{
+									"key": "quantity",
+									"value": "50",
+									"description": "Quantity to add (must be greater than 0)"
+								}
+							]
+						},
+						"description": "Adds stock for a product. Creates inventory record if it doesn't exist, otherwise increments existing quantity. Updates LastUpdated timestamp."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}
