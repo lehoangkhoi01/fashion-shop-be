@@ -114,6 +114,23 @@ namespace FashionShop.Business.Services
             return orders.Select(MapToDto).ToList();
         }
 
+        public async Task<PagedResult<OrderDto>> GetOrdersPagedAsync(PaginationRequest request)
+        {
+            var (orders, totalCount) = await _orderRepository.ListPagedAsync(request.PageNumber, request.PageSize);
+            
+            // Manually load related entities for each order
+            foreach (var order in orders)
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    item.Product = await _productRepository.GetByIdAsync(item.ProductId);
+                }
+            }
+
+            var orderDtos = orders.Select(MapToDto).ToList();
+            return new PagedResult<OrderDto>(orderDtos, totalCount, request.PageNumber, request.PageSize);
+        }
+
         private static OrderDto MapToDto(Order order)
         {
             return new OrderDto

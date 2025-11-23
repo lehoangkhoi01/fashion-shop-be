@@ -11,5 +11,6 @@ namespace FashionShop.Business.Interfaces
         Task<ProductDto> CreateProductAsync(CreateProductDto productDto);
         Task UpdateProductAsync(UpdateProductDto productDto);
         Task DeleteProductAsync(int id);
+        Task<PagedResult<ProductDto>> GetProductsPagedAsync(PaginationRequest request);
     }
 }

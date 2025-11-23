@@ -9,5 +9,6 @@ namespace FashionShop.Business.Interfaces
         Task<OrderDto> PlaceOrderAsync(CreateOrderDto createOrderDto);
         Task<OrderDto?> GetOrderByIdAsync(int orderId);
         Task<IReadOnlyList<OrderDto>> GetOrdersByUserIdAsync(int userId);
+        Task<PagedResult<OrderDto>> GetOrdersPagedAsync(PaginationRequest request);
     }
 }

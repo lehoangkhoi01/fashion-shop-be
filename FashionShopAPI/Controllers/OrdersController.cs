@@ -17,6 +17,20 @@ namespace FashionShopAPI.Controllers
             _orderService = orderService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] PaginationRequest request)
+        {
+            try
+            {
+                var orders = await _orderService.GetOrdersPagedAsync(request);
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> PlaceOrder(CreateOrderDto orderDto)
         {

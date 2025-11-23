@@ -17,9 +17,9 @@ namespace FashionShopAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PaginationRequest request)
         {
-            var products = await _productService.GetAllProductsAsync();
+            var products = await _productService.GetProductsPagedAsync(request);
             return Ok(products);
         }
 

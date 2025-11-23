@@ -15,5 +15,6 @@ namespace FashionShop.Core.Interfaces
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
         Task SoftDeleteAsync(T entity);
+        Task<(IReadOnlyList<T> Items, int TotalCount)> ListPagedAsync(int page, int pageSize, Expression<Func<T, bool>>? predicate = null);
     }
 }

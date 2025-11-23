@@ -43,6 +43,18 @@ namespace FashionShop.Business.Services
             return productDtos;
         }
 
+        public async Task<PagedResult<ProductDto>> GetProductsPagedAsync(PaginationRequest request)
+        {
+            // Note: Caching strategy for paged results can be complex. 
+            // For now, we are bypassing cache to ensure correctness.
+            // Future improvement: Cache by page key or use a more sophisticated caching mechanism.
+
+            var (products, totalCount) = await _productRepository.ListPagedAsync(request.PageNumber, request.PageSize);
+            var productDtos = products.Select(MapToDto).ToList();
+
+            return new PagedResult<ProductDto>(productDtos, totalCount, request.PageNumber, request.PageSize);
+        }
+
         public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
             var cacheKey = $"product_{id}";

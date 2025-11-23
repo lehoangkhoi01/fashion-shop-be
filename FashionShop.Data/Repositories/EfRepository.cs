@@ -58,5 +58,20 @@ namespace FashionShop.Data.Repositories
             entity.DeletedAt = DateTime.UtcNow;
             await UpdateAsync(entity);
         }
+
+        public virtual async Task<(IReadOnlyList<T> Items, int TotalCount)> ListPagedAsync(int page, int pageSize, Expression<Func<T, bool>>? predicate = null)
+        {
+            var query = _dbContext.Set<T>().AsQueryable();
+
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 }
