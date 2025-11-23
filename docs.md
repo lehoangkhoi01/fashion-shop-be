@@ -1,13 +1,63 @@
 # Fashion Shop Backend - Technical Documentation
 
+
+
 ## Table of Contents
-1. [Architecture](#architecture)
-2. [Database Design](#database-design)
-3. [Technology Stack](#technology-stack)
-4. [Business Rules & Validations](#business-rules--validations)
-5. [Caching Strategy](#caching-strategy)
-6. [Concurrency Handling](#concurrency-handling)
-7. [Improvements](#improvements)
+1. [Project Scope and Business Requirements](#project-scope-and-business-requirements)
+2. [Architecture](#architecture)
+3. [Database Design](#database-design)
+4. [Technology Stack](#technology-stack)
+5. [Business Rules & Validations](#business-rules--validations)
+6. [Caching Strategy](#caching-strategy)
+7. [Concurrency Handling](#concurrency-handling)
+8. [Pagination Strategy](#pagination-strategy)
+9. [Improvements](#improvements)
+
+---
+
+## Project Scope and Business Requirements
+
+### 1. Project Overview
+The Fashion Shop Backend is a robust, scalable e-commerce API designed to manage products, catalogs, inventory, and orders. It serves as the core engine for a fashion retail application, supporting both authenticated users and guest checkout experiences. The system prioritizes data integrity, performance through caching, and reliable inventory management.
+
+### 2. Core Features & Scope
+
+#### 2.1 Product Management
+*   **Catalog Organization**: Products are organized into catalogs (categories).
+*   **Flexible Attributes**: Products support dynamic properties (e.g., size, color, material) via JSON storage, allowing for a wide variety of fashion items without schema changes.
+*   **Lifecycle Management**: Full CRUD capabilities with Soft Delete to preserve historical data.
+*   **Performance**: High-performance retrieval using Redis caching for product listings and details.
+
+#### 2.2 Inventory Management
+*   **Real-time Tracking**: Accurate tracking of stock levels for each product.
+*   **Concurrency Control**: Optimistic concurrency handling to prevent overselling during high-traffic periods (e.g., flash sales).
+*   **Stock Validation**: Strict validation ensures orders cannot be placed for out-of-stock items.
+*   **Automatic Replenishment**: Capabilities to add or adjust stock levels seamlessly.
+
+#### 2.3 Order Processing
+*   **Dual Checkout Modes**:
+    *   **Guest Checkout**: Allows anonymous users to purchase using a unique Guest ID.
+    *   **User Checkout**: Supports registered users with order history tracking.
+*   **Atomic Transactions**: Order placement and inventory deduction occur within a unified workflow to ensure consistency.
+*   **Price Snapshotting**: Captures the exact price of items at the time of purchase, protecting historical order data from future price changes.
+*   **Order History**: Users can view their past orders with full details.
+
+#### 2.4 System Architecture
+*   **Clean Architecture**: Separation of concerns (Core, Data, Business, API) for maintainability.
+*   **Performance Optimization**:
+    *   **Caching**: Strategic caching of high-read data (Products, Catalogs).
+    *   **Pagination**: Efficient offset-based pagination for large datasets.
+*   **Data Integrity**:
+    *   **Soft Deletes**: Prevents accidental permanent data loss.
+    *   **Audit Trails**: Timestamps for creation, updates, and deletions.
+
+### 3. Key Business Requirements
+
+1.  **Inventory Integrity**: The system MUST prevent negative stock levels. Inventory checks and deductions must be atomic or handled with optimistic locking to support concurrent users.
+2.  **Price Stability**: Order totals MUST be calculated server-side using current database prices. Historical orders MUST retain the price at the time of purchase.
+3.  **Guest Accessibility**: The system MUST support a seamless checkout experience for non-registered users without forcing account creation.
+4.  **Performance**: Public-facing endpoints (Product/Catalog listings) MUST be cached to ensure sub-millisecond response times under load.
+5.  **Data Preservation**: Critical entities (Products, Catalogs) MUST NOT be permanently deleted from the database to ensure referential integrity for historical orders.
 
 ---
 
@@ -594,6 +644,54 @@ The `RowVersion` field is a PostgreSQL timestamp that:
 - **Missing Inventory**: Exception thrown
 - **Concurrent Updates**: Retry mechanism
 - **Retry Exhaustion**: Clear error message to user
+
+---
+
+## Pagination Strategy
+
+### Current Implementation: Offset-based Pagination
+
+The system currently employs a standard **Offset-based Pagination** strategy. This is implemented via the `PaginationRequest` DTO, which accepts `PageNumber` and `PageSize`.
+
+**How it works:**
+The data access layer calculates the number of records to skip based on the formula:
+`Skip = (PageNumber - 1) * PageSize`
+It then takes the next `PageSize` records.
+
+**Code Reference:**
+- **Request**: `FashionShop.Business.DTOs.PaginationRequest`
+- **Implementation**: `EfRepository.ListPagedAsync` using `.Skip().Take()`
+
+### Pros & Cons
+
+#### **Pros**
+1.  **Simplicity**: Extremely easy to implement and understand. Directly maps to SQL `OFFSET` and `LIMIT`.
+2.  **Random Access**: Allows users to jump directly to any specific page (e.g., "Go to Page 5") without traversing previous pages.
+3.  **Stateless**: The server does not need to maintain any cursor state; the request contains all necessary information.
+4.  **Frontend Friendly**: Easy to build standard pagination UI (Page 1, 2, 3... Next, Last).
+
+#### **Cons**
+1.  **Performance at Scale (Deep Pagination)**: Performance degrades linearly as the offset increases. To fetch Page 1000, the database must scan and discard the first 999 pages of results, which can be slow for large datasets.
+2.  **Data Inconsistency**:
+    - **Skipped Items**: If a new item is added to the top of the list while a user is viewing Page 1, moving to Page 2 might skip an item that was pushed down.
+    - **Duplicate Items**: If an item is deleted from Page 1 while the user is viewing it, moving to Page 2 might show an item that was already seen (shifted up).
+
+### Future Improvements
+
+#### **1. Cursor-based Pagination (Keyset Pagination)**
+**Recommendation**: Implement for "Infinite Scroll" features or high-volume APIs.
+- **Concept**: Instead of "Page 2", the client requests "10 items after Product ID 50".
+- **Benefit**: Constant time complexity (O(1)) regardless of how deep you scroll. Eliminates skipped/duplicate item issues during concurrent updates.
+- **Trade-off**: Cannot jump to a specific page number.
+
+#### **2. Hybrid Approach**
+**Recommendation**: Use Offset for the first few pages and Cursor for deep scrolling.
+- **Concept**: Allow random access for the first 10-20 pages (where users mostly stay) and switch to cursor-based logic for deeper navigation to maintain performance.
+
+#### **3. Caching Paged Results**
+**Recommendation**: Cache the first page of popular listings.
+- **Concept**: Store the result of "Page 1" for popular categories in Redis with a short expiration (e.g., 1-5 minutes).
+- **Benefit**: Drastically reduces database load, as the majority of user traffic is often just viewing the first page.
 
 ---
 
